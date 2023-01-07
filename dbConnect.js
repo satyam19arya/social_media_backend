@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 module.exports = async () => {
-    const mongoUri = "mongodb+srv://satyam:QDietkOLnIf6T7pV@cluster0.xy2vuav.mongodb.net/?retryWrites=true&w=majority";
+    const mongoUri = process.env.DATABASE;
     try{
         mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true }, () => {
             console.log('mongodb connection established')
