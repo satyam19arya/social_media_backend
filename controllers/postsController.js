@@ -2,12 +2,6 @@ const { success, error } = require('../utils/responseWrapper');
 const Post = require('../models/Post');
 const User = require('../models/User');
 
-const getAllPostsController = async (req, res) => {
-    console.log(req._id);
-    // return res.send("These are all the posts");
-    return res.send(success(200, "These are all the posts"));
-}
-
 const createPostController = async (req, res) => {
     try{
         const {caption} = req.body;
@@ -110,7 +104,6 @@ const deletePost = async (req, res) => {
 };
 
 module.exports = {
-    getAllPostsController,
     createPostController,
     likeAndUnlikePost,
     updatePostController,
