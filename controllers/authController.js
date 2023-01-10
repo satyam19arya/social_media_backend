@@ -6,7 +6,7 @@ const { error, success } = require('../utils/responseWrapper');
 
 const signupController = async(req, res) => {
     try{
-        const {name, email , password} = req.body;
+        const {name, email , password} = req.body;  //object destructuring
         
         if(!name || !email || !password){
             // return res.status(400).send("All fields are required");
@@ -52,7 +52,7 @@ const loginController = async(req, res) => {
         const matched = await bcrypt.compare(password, user.password);
         if(!matched){
             // return res.status(403).send("Incorrect password");
-            return res.send(error(403, 'Incorrect password'));
+            return res.send(error(403, 'Invalid credentials'));
         }
 
         const accessToken = generateAccessToken({
