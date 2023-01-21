@@ -55,13 +55,8 @@ const loginController = async(req, res) => {
             return res.send(error(403, 'Invalid credentials'));
         }
 
-        const accessToken = generateAccessToken({
-            _id: user._id,
-        })
-
-        const refreshToken = generateRefreshToken({
-            _id: user._id,
-        })
+        const accessToken = generateAccessToken({ _id: user._id})
+        const refreshToken = generateRefreshToken({ _id: user._id})
 
         res.cookie('jwt', refreshToken, {
             httpOnly: true,
@@ -114,7 +109,7 @@ const logoutController = async (req, res) => {
 //internal functions
 const generateAccessToken = (data) => {
     try{
-        const token = jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {expiresIn: '1d'});
+        const token = jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {expiresIn: '2h'});
         return token;
     }catch(e){
         console.log(e);

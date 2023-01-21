@@ -1,6 +1,8 @@
 const { success, error } = require('../utils/responseWrapper');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const { mapPostOutput } = require('../utils/Utils');
+const cloudinary = require('cloudinary').v2;
 
 const followOrUnfollowUserController = async (req, res) => {
     try{
@@ -25,38 +27,42 @@ const followOrUnfollowUserController = async (req, res) => {
             const followerIndex = userToFollow.followers.indexOf(curUser);
             userToFollow.followers.splice(followerIndex, 1);
 
-            await userToFollow.save();
-            await curUser.save();
-
-            return res.send(success(200, "User unfollowed"));
-
         }else{
             userToFollow.followers.push(curUserId);
-            curUser.followings.push(userIdToFollow);
-
-            await userToFollow.save();
-            await curUser.save();
-
-            return res.send(success(200, "User followed"));
+            curUser.followings.push(userIdToFollow);        
         }
+
+        await userToFollow.save();
+        await curUser.save();
+        return res.send(success(200, {user: userToFollow}));
 
     }catch(e){
         return res.send(error(500, e.message));
     }
 };
 
-const getPostsOfFollowing = async (req, res) => {
+const getFeedDataController = async (req, res) => {
     try{
         const curUserId = req._id;
-        const curUser = await User.findById(curUserId);
+        const curUser = await User.findById(curUserId).populate('followings');
 
-        const posts = await Post.find({
+        const fullPosts = await Post.find({
             'owner': {
                 '$in': curUser.followings
             }
-        })
+        }).populate('owner');
+        const posts = fullPosts.map( (item) => mapPostOutput(item, req._id)).reverse();
+        
+        const followingsIds = curUser.followings.map((item) => item._id);
+        followingsIds.push(req._id);  //so that we cant see our id in suggestions
 
-        return res.send(success(200, posts));
+        const suggestions = await User.find({
+            _id: {
+                $nin: followingsIds,
+            },
+        });
+
+        return res.send(success(200, {...curUser._doc, suggestions, posts}));
 
     }catch(e){
         return res.send(error(500, e.message));
@@ -66,9 +72,7 @@ const getPostsOfFollowing = async (req, res) => {
 const getMyPosts = async (req, res) => {
     try{
         const curUserId = req._id;
-        const allUserPosts = await Post.find({
-            owner: curUserId
-        }).populate('likes');
+        const allUserPosts = await Post.find({owner: curUserId}).populate('likes');
 
         return res.send(success(200, {allUserPosts}));
 
@@ -81,7 +85,7 @@ const getUserPosts = async (req, res) => {
     try{
         const userId = req.body.userId;
         if(!userId){
-            res.send(error(400, "Userid is required"));
+            res.send(error(400, "User not found"));
         }
         const allUserPosts = await Post.find({
             owner: userId
@@ -104,7 +108,7 @@ const deleteMyProfile = async (req, res) => {
             owner: curUserId
         })
 
-        //remove myself grom followers following
+        //remove myself from followers following
         curUser.followers.forEach(async (followerId) => {
             const follower = await User.findById(followerId);
             const index = follower.followings.indexOf(curUserId);
@@ -112,7 +116,7 @@ const deleteMyProfile = async (req, res) => {
             await follower.save();
         })
 
-        //remove myself grom followers following
+        //remove myself from followers following
         curUser.followings.forEach(async (followingId) => {
             const following = await User.findById(followingId);
             const index = following.followers.indexOf(curUserId);
@@ -133,7 +137,69 @@ const deleteMyProfile = async (req, res) => {
             httpOnly: true,
             secure: true,
         });
-        return res.send(success(200, "user deleted successfully"));
+
+        return res.send(success(200, "User deleted successfully"));
+
+    }catch(e){
+        return res.send(error(500, e.message));
+    }
+};
+
+const getMyInfo = async (req, res) => {
+    try{
+        const curUserId = req._id;
+        const user = await User.findById(curUserId);
+        return res.send(success(200, {user}));
+
+    }catch(e){
+        return res.send(error(500, e.message));
+    }
+};
+
+const updateUserProfile = async (req, res) => {
+    try{
+        const {name, bio, userImg} = req.body;
+        const curUserId = req._id;
+        const user = await User.findById(curUserId);
+
+        if(name){
+            user.name = name;
+        }
+        if(bio){
+            user.bio = bio;
+        }
+        if(userImg){
+            const cloudImg = await cloudinary.uploader.upload(userImg, {
+                folder: 'profileImg'
+            })
+            user.avatar = {
+                url: cloudImg.secure_url,
+                publicId: cloudImg.public_id
+            }
+        }
+
+        await user.save();
+        return res.send(success(200, {user}));
+
+    }catch(e){
+        return res.send(error(500, e.message));
+    }
+};
+
+const getUserProfile = async (req, res) => {
+    try{
+        const userId = req.body.userId;
+        const user = await User.findById(userId).populate({
+            path: 'posts',
+            populate: {
+                path: 'owner'
+            },
+        });
+
+        const fullPosts = user.posts;
+        const posts = fullPosts.map( (item) => mapPostOutput(item, req._id)).reverse();
+
+        return res.send(success(200, {...user._doc, posts}));  //doc -> give only relevant information
 
     }catch(e){
         return res.send(error(500, e.message));
@@ -143,8 +209,11 @@ const deleteMyProfile = async (req, res) => {
 
 module.exports = {
     followOrUnfollowUserController,
-    getPostsOfFollowing,
+    getFeedDataController,
     getMyPosts,
     getUserPosts,
-    deleteMyProfile
+    deleteMyProfile,
+    getMyInfo,
+    updateUserProfile,
+    getUserProfile
 }
