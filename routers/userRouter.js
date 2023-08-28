@@ -10,5 +10,7 @@ router.delete('/delete', requireUser, userController.deleteMyProfile);
 router.get('/getMyInfo', requireUser, userController.getMyInfo);
 router.put('/', requireUser, userController.updateUserProfile);
 router.post('/getUserProfile', requireUser, userController.getUserProfile);
+router.post("/searchUser", requireUser, userController.searchUserController);
+router.get("/getExploreData", requireUser, userController.getPostsOfNotFollowingController);
 
 module.exports = router;

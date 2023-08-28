@@ -87,9 +87,7 @@ const getUserPosts = async (req, res) => {
         if(!userId){
             res.send(error(400, "User not found"));
         }
-        const allUserPosts = await Post.find({
-            owner: userId
-        }).populate('likes');
+        const allUserPosts = await Post.find({owner: userId}).populate('likes');
 
         return res.send(success(200, {allUserPosts}));
 
@@ -194,7 +192,9 @@ const getUserProfile = async (req, res) => {
             populate: {
                 path: 'owner'
             },
-        });
+        })
+        .populate("followers")
+        .populate("followings");
 
         const fullPosts = user.posts;
         const posts = fullPosts.map( (item) => mapPostOutput(item, req._id)).reverse();
@@ -203,6 +203,48 @@ const getUserProfile = async (req, res) => {
 
     }catch(e){
         return res.send(error(500, e.message));
+    }
+};
+
+const searchUserController = async (req, res) => {
+    try {
+        const { searchQuery } = req.body;
+
+        if (!searchQuery) {
+            res.send(error(400, "Search query is required"));
+        }
+
+        const user = await User.find({
+            $or: [{ name: { $regex: searchQuery, $options: "i" } }],
+        });
+
+        return res.send(success(200, { user }));
+    } catch (err) {
+        return res.send(error(500, err.message));
+    }
+};
+
+const getPostsOfNotFollowingController = async (req, res) => {
+    try {
+        const curUserId = req._id;
+        const curUser = await User.findById(curUserId).populate("followings");
+
+        const followingsIds = curUser.followings.map((item) => item._id);
+        followingsIds.push(req._id);
+
+        const fullPosts = await Post.find({
+            owner: {
+                $nin: followingsIds,
+            },
+        }).populate("owner");
+
+        const posts = fullPosts
+            .map((item) => mapPostOutput(item, req._id))
+            .reverse();
+
+        return res.send(success(200, { posts }));
+    } catch (err) {
+        return res.send(error(500, err.message));
     }
 };
 
@@ -215,5 +257,7 @@ module.exports = {
     deleteMyProfile,
     getMyInfo,
     updateUserProfile,
-    getUserProfile
+    getUserProfile,
+    searchUserController,
+    getPostsOfNotFollowingController
 }

@@ -112,10 +112,10 @@ const deletePost = async (req, res) => {
             return res.send(error(403, 'Only owners can delete their posts'))
         }
 
-        const index = curUser.posts.indexOf(postId);
+        const index = curUser.posts.indexOf(postId); // removing post from user array also
         curUser.posts.splice(index, 1);
         await curUser.save();
-        await post.remove();
+        await post.remove();  // deleting post from post schema
 
         return res.send(success(200, 'post deleted successfully'));
 

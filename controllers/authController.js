@@ -100,6 +100,7 @@ const logoutController = async (req, res) => {
             httpOnly: true,
             secure: true
         });
+        //refresh token deleted and access token should be deleted by frontend
         return res.send(success(200, 'user logged out'));
     }catch(e){
         return res.send(error(500, e.message));
@@ -109,7 +110,7 @@ const logoutController = async (req, res) => {
 //internal functions
 const generateAccessToken = (data) => {
     try{
-        const token = jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {expiresIn: '2h'});
+        const token = jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {expiresIn: '1d'});
         return token;
     }catch(e){
         console.log(e);
