@@ -5,8 +5,6 @@ const authRouter = require('./routers/authRouter');
 const postsRouter = require('./routers/postsRouter');
 const userRouter = require('./routers/userRouter');
 const commentRouter = require("./routers/commentRouter");
-const chatRouter = require('./routers/chatRouter');
-const messagesRouter = require('./routers/messageRouter');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -45,8 +43,6 @@ app.use('/auth', authRouter);
 app.use('/posts', postsRouter);
 app.use('/user', userRouter);
 app.use("/comment", commentRouter);
-app.use('/chat', chatRouter);
-app.use('/message', messagesRouter);
 
 app.listen(PORT, () => {
     console.log(`listening on port: ${PORT}`);
