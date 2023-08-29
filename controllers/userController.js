@@ -101,12 +101,12 @@ const deleteMyProfile = async (req, res) => {
         const curUserId = req._id;
         const curUser = await User.findById(curUserId);
 
-        //delete all posts
+        // delete all posts
         await Post.deleteMany({
             owner: curUserId
         })
 
-        //remove myself from followers following
+        // remove myself from followers following
         curUser.followers.forEach(async (followerId) => {
             const follower = await User.findById(followerId);
             const index = follower.followings.indexOf(curUserId);
@@ -114,7 +114,7 @@ const deleteMyProfile = async (req, res) => {
             await follower.save();
         })
 
-        //remove myself from followers following
+        // remove myself from followings followers
         curUser.followings.forEach(async (followingId) => {
             const following = await User.findById(followingId);
             const index = following.followers.indexOf(curUserId);
@@ -122,12 +122,29 @@ const deleteMyProfile = async (req, res) => {
             await following.save();
         })
 
-        //remove myself from all likes
+        // remove myself from all likes
         const allPosts = await Post.find();
         allPosts.forEach(async (post) => {
             const index = post.likes.indexOf(curUserId);
             post.likes.splice(index, 1);
             await post.save();
+        })
+
+        // delete profile image from cloudinary
+        if(curUser.avatar.publicId){
+            await cloudinary.uploader.destroy(curUser.avatar.publicId);
+        }
+
+        // remove myself from all comments
+        const allComments = await Post.find();
+        allComments.forEach(async (post) => {
+            post.comments.forEach(async (comment) => {
+                if(comment.owner.toString() === curUserId.toString()){
+                    const index = post.comments.indexOf(comment);
+                    post.comments.splice(index, 1);
+                    await post.save();
+                }
+            })
         })
 
         await curUser.remove();
