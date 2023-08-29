@@ -12,7 +12,7 @@ jobs:
           command: |
             version="build-$CIRCLE_BUILD_NUM"
             echo $version
-            docker build -t social_media_backend:$version --build-arg PORT=$PORT --build-arg DATABASE=$DATABASE --build-arg ACCESS_TOKEN_PRIVATE_KEY=$ACCESS_TOKEN_PRIVATE_KEY --build-arg REFRESH_TOKEN_PRIVATE_KEY=$REFRESH_TOKEN_PRIVATE_KEY --build-arg CLOUDINARY_CLOUD_NAME=$CLOUDINARY_CLOUD_NAME --build-arg CLOUDINARY_API_KEY=$CLOUDINARY_API_KEY --build-arg CLOUDINARY_API_SECRET=$CLOUDINARY_API_SECRET --build-arg CORS_ORIGIN=$CORS_ORIGIN .
+            docker build -t social_media_backend:$version .
             docker tag social_media_backend:$version satyam19arya/social_media_backend:$version
             echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
             docker push satyam19arya/social_media_backend:$version
