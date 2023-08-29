@@ -97,56 +97,40 @@ const getUserPosts = async (req, res) => {
 };
 
 const deleteMyProfile = async (req, res) => {
-    try{
+    try {
         const curUserId = req._id;
         const curUser = await User.findById(curUserId);
 
-        // delete all posts
-        await Post.deleteMany({
-            owner: curUserId
-        })
-
-        // remove myself from followers following
-        curUser.followers.forEach(async (followerId) => {
-            const follower = await User.findById(followerId);
-            const index = follower.followings.indexOf(curUserId);
-            follower.followings.splice(index, 1);
-            await follower.save();
-        })
-
-        // remove myself from followings followers
-        curUser.followings.forEach(async (followingId) => {
-            const following = await User.findById(followingId);
-            const index = following.followers.indexOf(curUserId);
-            following.followers.splice(index, 1);
-            await following.save();
-        })
-
-        // remove myself from all likes
-        const allPosts = await Post.find();
-        allPosts.forEach(async (post) => {
-            const index = post.likes.indexOf(curUserId);
-            post.likes.splice(index, 1);
+        //Delete all posts and remove likes and comments from posts
+        const userPosts = await Post.find({ owner: curUserId });
+        for (const post of userPosts) {
+            // Remove likes
+            post.likes.pull(curUserId);
+            // Remove comments by the user
+            post.comments = post.comments.filter(comment => comment.owner.toString() !== curUserId.toString());
             await post.save();
-        })
+        }
 
-        // delete profile image from cloudinary
-        if(curUser.avatar.publicId){
+        //Update followers and followings
+        const followers = await User.find({ _id: { $in: curUser.followers } });
+        const followings = await User.find({ _id: { $in: curUser.followings } });
+
+        for (const follower of followers) {
+            follower.followings.pull(curUserId);
+            await follower.save();
+        }
+
+        for (const following of followings) {
+            following.followers.pull(curUserId);
+            await following.save();
+        }
+
+        //Delete profile image from cloudinary
+        if (curUser.avatar.publicId) {
             await cloudinary.uploader.destroy(curUser.avatar.publicId);
         }
 
-        // remove myself from all comments
-        const allComments = await Post.find();
-        allComments.forEach(async (post) => {
-            post.comments.forEach(async (comment) => {
-                if(comment.owner.toString() === curUserId.toString()){
-                    const index = post.comments.indexOf(comment);
-                    post.comments.splice(index, 1);
-                    await post.save();
-                }
-            })
-        })
-
+        //Remove user and clear JWT cookie
         await curUser.remove();
         res.clearCookie('jwt', {
             httpOnly: true,
@@ -155,7 +139,7 @@ const deleteMyProfile = async (req, res) => {
 
         return res.send(success(200, "User deleted successfully"));
 
-    }catch(e){
+    } catch (e) {
         return res.send(error(500, e.message));
     }
 };
