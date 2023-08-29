@@ -19,6 +19,18 @@ const postSchema = mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'user'
         }
+    ],
+    comments: [
+        {
+            owner: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'user'
+            },
+            content: {
+                type: String,
+                required: true
+            }
+        }
     ]
 }, {
     timestamps: true

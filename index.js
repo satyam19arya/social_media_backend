@@ -4,7 +4,6 @@ const dbConnect = require('./dbConnect');
 const authRouter = require('./routers/authRouter');
 const postsRouter = require('./routers/postsRouter');
 const userRouter = require('./routers/userRouter');
-const commentRouter = require("./routers/commentRouter");
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -42,7 +41,6 @@ app.get('/', (req, res) => {
 app.use('/auth', authRouter);
 app.use('/posts', postsRouter);
 app.use('/user', userRouter);
-app.use("/comment", commentRouter);
 
 app.listen(PORT, () => {
     console.log(`listening on port: ${PORT}`);

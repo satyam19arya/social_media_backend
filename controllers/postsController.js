@@ -124,9 +124,52 @@ const deletePost = async (req, res) => {
     }
 };
 
+const commentOnPost = async (req, res) => {
+    try{
+        const {postId, content} = req.body;
+        const userId = req._id;
+    
+        const post = await Post.findById(postId);
+        if(!post){
+            return res.send(error(404, 'Post not found'));
+        }
+
+        const comment = {
+            owner: userId,
+            content
+        }
+
+        post.comments.push(comment);
+        await post.save();
+
+        return res.send(success(201, {comment}));
+    }catch(e){
+        return res.send(error(500, e.message));
+    }
+}
+
+const getComments = async (req, res) => {
+    try{
+        const {postId} = req.body;
+
+        const post = await Post.findById(postId);
+        if(!post){
+            return res.send(error(404, 'Post not found'));
+        }
+
+        const comments = await Post.findById(postId).populate('comments.content');
+        return res.send(success(200, {comments}));
+    }
+    catch(e){
+        return res.send(error(500, e.message));
+    }
+}
+
 module.exports = {
     createPostController,
     likeAndUnlikePost,
     updatePostController,
-    deletePost
+    deletePost,
+    commentOnPost,
+    getComments
 };
