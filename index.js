@@ -35,7 +35,7 @@ const PORT = process.env.PORT;
 dbConnect();
 
 app.get('/', (req, res) => {
-    res.send('Hello from server 😎');
+    res.send('Hello from PRANAV 😎');
 });
 
 app.use('/auth', authRouter);
