@@ -1,5 +1,6 @@
 version: 2.1
-
+orbs:
+  slack: circleci/slack@4.9.3
 jobs:
   build_and_push:
     docker:
@@ -38,10 +39,28 @@ jobs:
             git config credential.helper 'cache --timeout=120'
             git push -q https://$GITHUB_PERSONAL_TOKEN@github.com/satyam19arya/social_media_yaml_manifest.git master 
 
+  notify:
+    docker:
+      - image: 'cimg/base:stable'
+    steps:
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+          mentions: '@satyam19arya'
+      - slack/notify:
+          event: pass
+          template: basic_success_1
+          mentions: '@satyam19arya'
+
 workflows:
   GitOpsflow:
     jobs:
       - build_and_push
       - Update_manifest:
           requires:
+            - build_and_push
+      - notify:
+          context: slack-secrets
+          requires:
+            - Update_manifest
             - build_and_push
