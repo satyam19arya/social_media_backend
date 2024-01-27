@@ -33,7 +33,7 @@ jobs:
             git config --global user.email "satyam19arya@gmail.com"
             git config --global user.name "satyam19arya"
             cd social_media_yaml_manifest
-            sed -i "s/build-.*/build-$TAG/g" manifest/backend_deployment.yaml
+            sed -i "s/build-.*/build-$TAG/g" dev/backend_deployment.yaml
             git add .
             git commit -m "updated image version:$TAG"
             git config credential.helper 'cache --timeout=120'
