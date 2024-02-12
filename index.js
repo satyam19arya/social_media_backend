@@ -35,7 +35,7 @@ const PORT = process.env.PORT;
 dbConnect();
 
 app.get('/', (req, res) => {
-    res.send('Hello from derver 😎');
+    res.send('Hello from server 😎');
 });
 
 app.get('/ok', (req, res) => {
