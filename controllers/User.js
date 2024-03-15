@@ -69,49 +69,22 @@ const getFeedDataController = async (req, res) => {
     }
 };
 
-const getMyPosts = async (req, res) => {
-    try{
-        const curUserId = req._id;
-        const allUserPosts = await Post.find({owner: curUserId}).populate('likes');
-
-        return res.send(success(200, {allUserPosts}));
-
-    }catch(e){
-        return res.send(error(500, e.message));
-    }
-};
-
-const getUserPosts = async (req, res) => {
-    try{
-        const userId = req.body.userId;
-        if(!userId){
-            res.send(error(400, "User not found"));
-        }
-        const allUserPosts = await Post.find({owner: userId}).populate('likes');
-
-        return res.send(success(200, {allUserPosts}));
-
-    }catch(e){
-        return res.send(error(500, e.message));
-    }
-};
-
 const deleteMyProfile = async (req, res) => {
     try {
         const curUserId = req._id;
         const curUser = await User.findById(curUserId);
 
-        //Delete all posts and remove likes and comments from posts
+        // Delete all posts and remove likes and comments from posts
         const userPosts = await Post.find({ owner: curUserId });
         for (const post of userPosts) {
             // Remove likes
             post.likes.pull(curUserId);
-            // Remove comments by the user
+            // Remove comments
             post.comments = post.comments.filter(comment => comment.owner.toString() !== curUserId.toString());
             await post.save();
         }
 
-        //Update followers and followings
+        // Update followers and followings
         const followers = await User.find({ _id: { $in: curUser.followers } });
         const followings = await User.find({ _id: { $in: curUser.followings } });
 
@@ -125,13 +98,18 @@ const deleteMyProfile = async (req, res) => {
             await following.save();
         }
 
-        //Delete profile image from cloudinary
+        // Delete user avatar from cloudinary
         if (curUser.avatar.publicId) {
             await cloudinary.uploader.destroy(curUser.avatar.publicId);
         }
 
-        //Remove user and clear JWT cookie
+        // Delete user posts
+        await Post.deleteMany({ owner: curUserId });
+
+        // Delete user from database
         await curUser.remove();
+
+        // Clear jwt cookie
         res.clearCookie('jwt', {
             httpOnly: true,
             secure: true,
@@ -144,7 +122,7 @@ const deleteMyProfile = async (req, res) => {
     }
 };
 
-const getMyInfo = async (req, res) => {
+const getMyProfile = async (req, res) => {
     try{
         const curUserId = req._id;
         const user = await User.findById(curUserId);
@@ -200,7 +178,7 @@ const getUserProfile = async (req, res) => {
         const fullPosts = user.posts;
         const posts = fullPosts.map( (item) => mapPostOutput(item, req._id)).reverse();
 
-        return res.send(success(200, {...user._doc, posts}));  //doc -> give only relevant information
+        return res.send(success(200, {...user._doc, posts}));
 
     }catch(e){
         return res.send(error(500, e.message));
@@ -225,40 +203,11 @@ const searchUserController = async (req, res) => {
     }
 };
 
-const getPostsOfNotFollowingController = async (req, res) => {
-    try {
-        const curUserId = req._id;
-        const curUser = await User.findById(curUserId).populate("followings");
-
-        const followingsIds = curUser.followings.map((item) => item._id);
-        followingsIds.push(req._id);
-
-        const fullPosts = await Post.find({
-            owner: {
-                $nin: followingsIds,
-            },
-        }).populate("owner");
-
-        const posts = fullPosts
-            .map((item) => mapPostOutput(item, req._id))
-            .reverse();
-
-        return res.send(success(200, { posts }));
-    } catch (err) {
-        return res.send(error(500, err.message));
-    }
-};
-
-
 module.exports = {
     followOrUnfollowUserController,
     getFeedDataController,
-    getMyPosts,
-    getUserPosts,
     deleteMyProfile,
-    getMyInfo,
+    getMyProfile,
     updateUserProfile,
-    getUserProfile,
-    searchUserController,
-    getPostsOfNotFollowingController
-}
+    getUserProfile
+};

@@ -5,16 +5,19 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        lowercase: true
+        lowercase: true,
+        trim: true
     },
     password: {
         type: String,
         required: true,
-        select: false
+        select: false,
+        trim: true
     },
     name: {
         type: String,
         required: true,
+        trim: true
     },
     bio: {
         type: String,
@@ -40,7 +43,9 @@ const userSchema = mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'post'
         }
-    ]
+    ],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, {
     timestamps: true
 }); 
