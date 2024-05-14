@@ -21,7 +21,7 @@ cloudinary.config({
 app.use(express.json({ limit: "20mb" }));
 app.use(morgan('common'));
 app.use(cookieParser());
-let origin = 'http://frontend.satyam-arya.click';
+let origin = 'http://a08e98508720848949fc8fed82784b79-1291714434.us-east-1.elb.amazonaws.com';
 if(process.env.NODE_ENV === 'production') {
     origin = process.env.CORS_ORIGIN;
 }
